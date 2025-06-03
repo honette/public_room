@@ -4,18 +4,19 @@ import urllib.parse
 
 app = Flask(__name__)
 IMAGE_ROOT = "./images"
-MAX_THUMBNAILS = 3
+MAX_THUMBNAILS = 5
 
 TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Noobai Viewer</title>
+  <title>Prompt Viewer</title>
   <style>
     body { font-family: sans-serif; }
     .block { margin-bottom: 30px; }
     .title { font-size: 1.5em; margin: 10px 0; cursor: pointer; }
+    .template { font-size: 0.9em; color: #666; margin-bottom: 5px; white-space: pre-wrap; }
     .gallery { display: flex; flex-wrap: wrap; gap: 10px; }
     .item { width: 200px; cursor: pointer; }
     img { width: 100%; border-radius: 12px; }
@@ -23,12 +24,13 @@ TEMPLATE = """
   </style>
 </head>
 <body>
-<h1>Noobai タグ別ビューア</h1>
-{% for folder, images in folders.items() %}
+<h1>Prompt Viewer For NoobAI</h1>
+{% for folder, info in folders.items() %}
   <div class="block">
-    <div class="title" onclick="toggleGallery('{{ folder }}')">📁 {{ folder }}（クリックで展開）</div>
+    <div class="title" onclick="toggleGallery('{{ folder }}')">📁 {{ folder }} (Click to expand)</div>
+    <div class="template">_tag.txt: {{ info.template or "*NOTHING*" }}</div>
     <div class="gallery" id="thumb-{{ folder }}">
-      {% for img in images[:3] %}
+      {% for img in info.images[:max_thumbs] %}
         <div class="item" onclick="copyPrompt(`{{ img.prompt }}`)">
           <img src="/images/{{ folder }}/{{ img.filename }}" alt="">
           <p>{{ img.name }}</p>
@@ -36,7 +38,7 @@ TEMPLATE = """
       {% endfor %}
     </div>
     <div class="gallery hidden" id="full-{{ folder }}">
-      {% for img in images[3:] %}
+      {% for img in info.images %}
         <div class="item" onclick="copyPrompt(`{{ img.prompt }}`)">
           <img src="/images/{{ folder }}/{{ img.filename }}" alt="">
           <p>{{ img.name }}</p>
@@ -73,7 +75,6 @@ def index():
         if not os.path.isdir(folder_path):
             continue
 
-        # テンプレート読み込み or 自動作成
         tag_file_path = os.path.join(folder_path, "_tag.txt")
         template_str = None
         if os.path.exists(tag_file_path):
@@ -88,7 +89,7 @@ def index():
                 if template_str and "????" in template_str:
                     prompt = template_str.replace("????", safe_name)
                 else:
-                    prompt = safe_name  # fallback
+                    prompt = safe_name
                 images.append({
                     "filename": filename,
                     "name": safe_name,
@@ -96,8 +97,11 @@ def index():
                 })
 
         if images:
-            folders[subfolder] = images
-    return render_template_string(TEMPLATE, folders=folders)
+            folders[subfolder] = {
+                "images": images,
+                "template": template_str
+            }
+    return render_template_string(TEMPLATE, folders=folders, max_thumbs=MAX_THUMBNAILS)
 
 @app.route("/images/<path:filename>")
 def image(filename):
