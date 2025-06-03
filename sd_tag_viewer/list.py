@@ -21,10 +21,26 @@ TEMPLATE = """
     .item { width: 200px; cursor: pointer; }
     img { width: 100%; border-radius: 12px; }
     .hidden { display: none; }
+    #copiedMessage {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    #copiedMessage.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
 <h1>Prompt Viewer For NoobAI</h1>
+<div id="copiedMessage">コピー完了！</div>
 {% for folder, info in folders.items() %}
   <div class="block">
     <div class="title" onclick="toggleGallery('{{ folder }}')">📁 {{ folder }} (Click to expand)</div>
@@ -61,6 +77,13 @@ function toggleGallery(folder) {
     full.classList.add("hidden");
     thumb.style.display = "flex";
   }
+}
+function copyPrompt(prompt) {
+  navigator.clipboard.writeText(prompt).then(() => {
+    const msg = document.getElementById("copiedMessage");
+    msg.classList.add("show");
+    setTimeout(() => msg.classList.remove("show"), 3000);
+  });
 }
 </script>
 </body>

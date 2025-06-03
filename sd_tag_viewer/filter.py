@@ -18,16 +18,36 @@ TEMPLATE = """
     .item { width: 200px; cursor: pointer; }
     img { width: 100%; border-radius: 12px; }
     p { font-size: 0.9em; word-break: break-all; }
+    #copiedMessage {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 5px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1000;
+    }
+    #copiedMessage.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
 <h1>Noobai タグ比較ビューア</h1>
-<input type=\"text\" id=\"filterInput\" placeholder=\"タグ検索（スペース区切り, 2文字以上）\">
+<input type=\"text\" id=\"filterInput\" placeholder=\"タグ検索（スペース区切り）\">
 <div class=\"gallery\" id=\"gallery\"></div>
+<div id=\"copiedMessage\">コピー完了！</div>
 
 <script>
 function copyPrompt(prompt) {
-  navigator.clipboard.writeText(prompt).then(() => alert("コピー完了: " + prompt));
+  navigator.clipboard.writeText(prompt).then(() => {
+    const msg = document.getElementById("copiedMessage");
+    msg.classList.add("show");
+    setTimeout(() => msg.classList.remove("show"), 3000);
+  });
 }
 
 document.getElementById("filterInput").addEventListener("input", function () {
